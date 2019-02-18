@@ -1,0 +1,13 @@
+Weighted NLP with 100 epochs
+
+------------------------
+Evaluate data
+------------------------
+total errors 152
+accuracy % 0.62
+------------------------
+TPos 86, FPos 38, TNeg 162, FNeg114
+Accuracy: 0.62
+Precision: 0.6935483870967742
+Recall: 0.43
+f1-score: 0.5308641975308642

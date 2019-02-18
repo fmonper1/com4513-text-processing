@@ -15,8 +15,9 @@ class Nlp:
         self.weights = {}
         self.vector_of_weights = list({})
         self.errors = 0
-        self.positive_label = 1
-        self.negative_label = -1
+        self.correct_predictions = 0
+        self.positive_label = 1.0
+        self.negative_label = -1.0
         self.true_positives = 0
         self.false_positives = 0
         self.true_negatives = 0
@@ -35,8 +36,8 @@ class Nlp:
             with open(path_to_files + file, 'r') as f:
                 counted_words = re.sub("[^\w']", " ", f.read()).split()
                 for word in counted_words:
-                    if (word not in self.weights):
-                        self.weights[word] = 0
+#                    if word not in self.weights:
+                     self.weights[word] = 0
 
                 dictionary = Counter(counted_words)
                 tuple = (dictionary, label)
@@ -62,29 +63,6 @@ class Nlp:
             else:
                 self.false_negatives += 1
 
-    def reset_evaluation(self):
-        self.true_positives = 0
-        self.false_positives = 0
-        self.true_negatives = 0
-        self.false_negatives = 0
-
-    """
-    Perfoms an analysis based on the classified documents
-    and prints them in a human-readable way
-    """
-
-    def print_evaluation(self):
-        print("TPos {}, FPos {}, TNeg {}, FNeg{}".format(self.true_positives, self.false_positives, self.true_negatives,
-                                                         self.false_negatives))
-        accuracy = (self.true_positives + self.true_negatives) / (
-                    self.true_positives + self.true_negatives + self.false_positives + self.false_negatives)
-        print("Accuracy: {}".format(accuracy))
-        precision = self.true_positives / (self.true_positives + self.false_positives)
-        print("Precision: {}".format(precision))
-        recall = self.true_positives / (self.true_positives + self.false_negatives)
-        print("Recall: {}".format(recall))
-        f1_score = 2 * ((precision * recall) / (precision + recall))
-        print("f1-score: {}".format(f1_score))
 
     """
     This function calculates the weights of the words found
@@ -93,44 +71,25 @@ class Nlp:
 
     def calculate_weights(self):
         for i in range(15):
+            self.errors = 0
+            self.correct_predictions =0
+
             for document, label in self.training_documents:
                 pred_lable = self.predict_label(document)
                 #            print(label, pred_lable)
-                self.record_results(label, pred_lable)
+                # self.record_results(label, pred_lable)
                 if pred_lable is not label:
                     self.errors += 1
                     for word, counts in document.items():
                         self.weights[word] += label * counts
+                else: 
+                    self.correct_predictions += 1
             print("------------------------")
             print("iteration", i)
-            print("percentage correct", 1600 - self.errors / 1600)
-            self.print_evaluation()
-            self.reset_evaluation()
-
-    """
-    This function calculates the weights of the words found
-    in the training_data list
-    """
-
-    def calculate_weights_with_shuffle(self):
-        w = 0;
-        random.seed(420)
-        random.shuffle(self.training_documents)
-        for document, label in self.training_documents:
-            pred_lable = self.predict_label(document)
-            #            print(label, pred_lable)
-            self.record_results(label, pred_lable)
-            if pred_lable is not label:
-                self.errors += 1
-                if label is self.positive_label:
-                    #                    print("positive")
-                    #                    print(self.positive_lable)
-                    for word, counts in document.items():
-                        self.weights[word] += counts
-                else:
-                    #                    print("negative")
-                    for word, counts in document.items():
-                        self.weights[word] -= counts
+            print("percentage correct", self.correct_predictions / 1600)
+            print("total errors",  self.errors)
+            # self.print_evaluation()
+            # self.reset_evaluation()
 
     """
     This funcition returns a label for a given documents
@@ -140,8 +99,8 @@ class Nlp:
     def predict_label(self, document):
         score = 0.0
         for word, counts in document.items():
-            if word not in self.weights:
-                self.weights[word] = 0
+#            if word not in self.weights:
+#                self.weights[word] = 0
             score += counts * self.weights[word]
             if score >= 0.0:
                 return self.positive_label
@@ -243,16 +202,6 @@ nlp.calculate_weights()
 counter = 0
 
 print("------------------------")
-print("Basic perceptron with randomized training data")
-
-nlp2 = Nlp()
-nlp2.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
-nlp2.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
-
-nlp2.calculate_weights_with_shuffle()
-nlp2.print_evaluation()
-
-print("------------------------")
 print("Basic perceptron with randomized training data and iterations")
 nlp3 = Nlp()
 nlp3.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
@@ -260,8 +209,8 @@ nlp3.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
 nlp3.initialize_weights()
 nlp3.vector_of_weights.append(nlp3.weights)
 
-nlp3.calculate_weights_with_shuffle_and_iterations(10)
-nlp3.print_evaluation()
+nlp3.calculate_weights_with_shuffle_and_iterations(1)
+#nlp3.print_evaluation()
 # counter = 0
 # for word, weight in nlp3.weights.items():
 #     print(word, weight)
