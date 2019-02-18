@@ -146,9 +146,9 @@ class Nlp:
             if self.debug:
                 print("------------------------")
                 print("iteration", i + 1)
-                print("total errors", errors)
-                print("accuracy %", 1- (errors/len(self.training_documents)))
-                print("doc count", self.training_documents)
+                print("errors", errors)
+                print("doc count", len(self.training_documents))
+                print("accuracy", 1- (errors/len(self.training_documents)))
                 print("------------------------")
             self.errors_per_iteration.append(1 - (errors/len(self.training_documents)))
             # self.calculate_average_weights(c)
@@ -269,7 +269,7 @@ def process_data(nlp):
 print("Exercise 1 a")
 print("------------------------")
 nlp = Nlp()
-nlp.debug = True
+# nlp.debug = True
 nlp.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
 
 nlp.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
@@ -277,7 +277,7 @@ nlp.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
 nlp.process_test_data('review_polarity/txt_sentoken/pos/', positive_label)
 nlp.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
 # 1 repetition without shuffling the training data
-nlp.calculate_weights_bag_of_words(True)
+nlp.calculate_weights_bag_of_words(False)
 
 # n repetitions and shuffling the training data
 # nlp.calculate_weights(50, True)
@@ -286,7 +286,7 @@ nlp.calculate_weights_bag_of_words(True)
 # nlp.calculate_weights_averaged(20) # accuracy .59
 print("------------------------")
 print("Plot Learning Curve")
-title = "Accuracy Per Iteration"
+title = "Accuracy Per Document"
 ylabel = 'Accuracy'
 xlabel = 'Documents'
 nlp.plot_errors(title,xlabel,ylabel)
@@ -301,7 +301,7 @@ nlp.print_evaluation()
 print("------------------------")
 print("Perceptron 2")
 nlp2 = Nlp()
-nlp2.debug = True
+# nlp2.debug = True
 
 nlp2.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
 nlp2.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
@@ -327,3 +327,33 @@ print("------------------------")
 print("Evaluate data")
 nlp2.evaluate_test_data()
 nlp2.print_evaluation()
+
+print("------------------------")
+print("Perceptron 3")
+nlp3 = Nlp()
+nlp3.debug = True
+
+nlp3.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
+nlp3.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
+
+nlp3.process_test_data('review_polarity/txt_sentoken/pos/', positive_label)
+nlp3.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
+# 1 repetition without shuffling the training data
+# nlp2.calculate_weights(1, False)
+
+# n repetitions and shuffling the training data
+# nlp3.calculate_weights(23, True)
+
+nlp3.calculate_weights_averaged(18) # accuracy .61
+# nlp2.calculate_weights_averaged(20) # accuracy .59
+print("------------------------")
+print("Plot Learning Curve")
+title = "Accuracy Per Iteration"
+ylabel = 'Accuracy'
+xlabel = 'Iterations'
+nlp3.plot_errors(title,xlabel,ylabel)
+
+print("------------------------")
+print("Evaluate data")
+nlp3.evaluate_test_data()
+nlp3.print_evaluation()
