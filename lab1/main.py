@@ -136,7 +136,7 @@ class Nlp:
     def plot_errors(self):
         plt.plot(self.errors_per_iteration)
         plt.ylabel('Accuracy')
-        plt.ylabel('Iterations')
+        plt.xlabel('Iterations')
         # plt.ylim([0, 1])
         plt.show()
 
@@ -227,7 +227,8 @@ nlp.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
 # n repetitions and shuffling the training data
 # nlp.calculate_weights(50, True)
 
-nlp.calculate_weights_averaged(200)
+# nlp.calculate_weights_averaged(22) # accuracy .61
+nlp.calculate_weights_averaged(33) # accuracy .59
 print("------------------------")
 print("Plot")
 nlp.plot_errors()
