@@ -1,13 +1,9 @@
-import os
+import os, sys, re, random, argparse
 from collections import Counter
-import re
-import random
 from numpy import array, dot, random
 import matplotlib.pyplot as plt
 
-
 directory = os.path.join("c:\\", "path")
-
 
 class Nlp:
     def __init__(self):
@@ -17,7 +13,7 @@ class Nlp:
         self.sum_of_weights = {}
         self.zeroed_weights = {}
         self.dictionary = Counter()
-        self.vector_of_weights = [] 
+        self.vector_of_weights = []
         self.errors = 0
         self.errors_per_iteration = list()
         self.correct_predictions = 0
@@ -59,11 +55,17 @@ class Nlp:
                 test_data = (dictionary, label)
                 self.test_documents.append(test_data)
 
+
+    """ 
+    This function calculates the weights for different words
+    and plots a point in the graph for every document analysed
+    """
+
     def calculate_weights_bag_of_words(self, shuffle):
         errors = 0
         count = 0
-        random.seed(self.seed)
         if shuffle:
+            random.seed(self.seed)
             random.shuffle(self.training_documents)
         for document, label in self.training_documents:
             count += 1
@@ -79,7 +81,6 @@ class Nlp:
             print("total errors", errors)
             print("accuracy %", 1 - (errors / len(self.training_documents)))
             print("doc count", len(self.training_documents))
-            print("------------------------")
 
     """
     This function calculates the weights of the words found
@@ -95,13 +96,9 @@ class Nlp:
                 random.shuffle(self.training_documents)
             for document, label in self.training_documents:
                 predicted_label = self.predict_labels(document, self.weights)
-                #                print(label, pred_lable)
-                # self.record_results(label, predicted_label)
                 if predicted_label != label:
-                    # print(predicted_label, label)
                     errors += 1
                     for word, counts in document.items():
-                        # print("word", word, "weight ", self.weights[word], " new weight ", self.weights[word] + label * counts, "predicted_label", predicted_label, "label", label)
                         self.weights[word] = self.weights[word] + label * counts
             if self.debug:
                 print("------------------------")
@@ -109,13 +106,13 @@ class Nlp:
                 print("total errors", errors)
                 print("accuracy %", 1 - (errors / len(self.training_documents)))
                 print("doc count", len(self.training_documents))
-                print("------------------------")
-            self.errors_per_iteration.append(1 - (errors / len(self.training_documents)))
+            self.errors_per_iteration.append((1 - (errors / len(self.training_documents))))
 
     """
     Takes in a number of iterations for processing the data and a "debug" boolean
     to output to the console data about every iteration
     """
+
     def calculate_weights_averaged(self, iterations):
         random.seed(self.seed)
         c = 1  # used to keep track of which columns is being edited per iteration
@@ -127,18 +124,14 @@ class Nlp:
             self.vector_of_weights.append(self.vector_of_weights[i].copy())
 
             for document, label in self.training_documents:
-
-                # predicted_label = self.predict_labels(document, self.vector_of_weights[c-1])
                 predicted_label = self.predict_labels(document, self.weights)
                 if predicted_label != label:
                     errors += 1
 
                     for word, counts in document.items():
-                        # self.vector_of_weights[c][word] = self.vector_of_weights[c-1][word] + label * counts
                         self.sum_of_weights[word] = self.sum_of_weights[word] + label * counts
                 else:
                     for word, counts in document.items():
-                        # self.vector_of_weights[c][word] = self.vector_of_weights[c-1][word]
                         self.sum_of_weights[word] = self.sum_of_weights[word]
                 self.calculate_average_weights(c)
                 c += 1
@@ -149,25 +142,19 @@ class Nlp:
                 print("errors", errors)
                 print("doc count", len(self.training_documents))
                 print("accuracy", 1- (errors/len(self.training_documents)))
-                print("------------------------")
             self.errors_per_iteration.append(1 - (errors/len(self.training_documents)))
-            # self.calculate_average_weights(c)
 
-        # self.calculate_average_weights(c)
-            # self.print_evaluation()
-            # self.reset_evaluation()
-            
+    """
+    Sets self.weights to the average of self.sum_of_weights
+    """
+
     def calculate_average_weights(self, iterations):
-        # print(self.weights)
-        ## play with these functions, dont know which one is coreect
-        # for word, weight in self.vector_of_weights[iterations-1].items():
-        #     self.weights[word] += weight
-        # for i in range(iterations-1):
-        #     for word, weight in self.vector_of_weights[i].items():
-        #         self.weights[word] += weight
         for word, weight in self.sum_of_weights.items():
             self.weights[word] = weight / iterations
 
+    """
+    Used to plot a graph for the errors per iteration
+    """
 
     def plot_errors(self, title, xlabel, ylabel):
         plt.plot(self.errors_per_iteration)
@@ -208,25 +195,20 @@ class Nlp:
         print("total errors", errors)
         print("accuracy %", 1- (errors / 400))
         print("total documents %", len(self.test_documents))
-        print("------------------------")
-        # print("TPos {}, FPos {}, TNeg {}, FNeg{}".format(self.true_positives, self.false_positives, self.true_negatives,
-        #                                                  self.false_negatives))
+        print("TPos {}, FPos {}, TNeg {}, FNeg{}".format(self.true_positives, self.false_positives, self.true_negatives,
+                                                         self.false_negatives))
+
 
     def record_results(self, actual_label, predicted_label):
-        # print(actual_label, predicted_label)
         if actual_label == predicted_label:
             if actual_label == self.positive_label:
-                # print("truepos")
                 self.true_positives += 1
             else:
-                # print("trueneg")
                 self.true_negatives += 1
         else:
             if predicted_label == self.positive_label:
-                # print("falsepos")
                 self.false_positives += 1
             else:
-                # print("falseneg")
                 self.false_negatives += 1
 
     """
@@ -248,6 +230,15 @@ class Nlp:
         print("f1-score: {}".format(f1_score))
 
 
+def print_top_weights(weights):
+    s = [(k, weights[k]) for k in sorted(weights, key=weights.get, reverse=True)]
+    for k, v in s[:10]:
+        print(k, v)
+
+    for k, v in s[-10:]:
+        print(k, v)
+
+
 # labels
 positive_label = 1.0
 negative_label = -1.0
@@ -255,105 +246,118 @@ negative_label = -1.0
 """
 Process data to use in NLP object
 """
-def process_data(nlp):
-    nlp.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
-    nlp.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
-
-    nlp.process_test_data('review_polarity/txt_sentoken/pos/', positive_label)
-    nlp.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
-
-
-## -----------------------------
-## First perceptron
-## -----------------------------
-print("Exercise 1 a")
-print("------------------------")
-nlp = Nlp()
-# nlp.debug = True
-nlp.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
-
-nlp.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
-
-nlp.process_test_data('review_polarity/txt_sentoken/pos/', positive_label)
-nlp.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
-# 1 repetition without shuffling the training data
-nlp.calculate_weights_bag_of_words(False)
-
-# n repetitions and shuffling the training data
-# nlp.calculate_weights(50, True)
-
-# nlp.calculate_weights_averaged(22) # accuracy .61
-# nlp.calculate_weights_averaged(20) # accuracy .59
-print("------------------------")
-print("Plot Learning Curve")
-title = "Accuracy Per Document"
-ylabel = 'Accuracy'
-xlabel = 'Documents'
-nlp.plot_errors(title,xlabel,ylabel)
-
-print("Evaluate data")
-nlp.evaluate_test_data()
-nlp.print_evaluation()
+def do_data_processing(nlp, folder_name):
+    nlp.process_training_data(folder_name+'/txt_sentoken/neg/', negative_label)
+    nlp.process_training_data(folder_name+'/txt_sentoken/pos/', positive_label)
+    nlp.process_test_data(folder_name+'/txt_sentoken/neg/', negative_label)
+    nlp.process_test_data(folder_name+'/txt_sentoken/pos/', positive_label)
 
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('folder_name')
+
+    args = parser.parse_args()
+    folder_name = args.folder_name
+    print(args)
+
+    print('Number of arguments:', len(sys.argv), 'arguments.')
+    print('Argument List:', str(sys.argv))
 
 
-print("------------------------")
-print("Perceptron 2")
-nlp2 = Nlp()
-# nlp2.debug = True
+    ## -----------------------------
+    ## First perceptron, non-shuffled training data, only 1 iteration
+    ## -----------------------------
+    print("------------------------")
+    print("nlp - Perceptron 0, non-shuffled training data, only 1 iteration")
+    nlp = Nlp()
+    # nlp.debug = True
+    do_data_processing(nlp, folder_name)
+    # 1 repetition without shuffling the training data
+    shuffle_data = False
+    nlp.calculate_weights_bag_of_words(shuffle_data)
 
-nlp2.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
-nlp2.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
+    print("Plot Learning Curve")
+    title = "Accuracy Per Document"
+    ylabel = 'Accuracy'
+    xlabel = 'Documents'
+    nlp.plot_errors(title,xlabel,ylabel)
+    print("Evaluate data")
+    nlp.evaluate_test_data()
+    # nlp.print_evaluation()
+    print("------------------------")
 
-nlp2.process_test_data('review_polarity/txt_sentoken/pos/', positive_label)
-nlp2.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
-# 1 repetition without shuffling the training data
-# nlp2.calculate_weights(1, False)
 
-# n repetitions and shuffling the training data
-nlp2.calculate_weights(23, True)
 
-# nlp.calculate_weights_averaged(22) # accuracy .61
-# nlp2.calculate_weights_averaged(20) # accuracy .59
-print("------------------------")
-print("Plot Learning Curve")
-title = "Accuracy Per Iteration"
-ylabel = 'Accuracy'
-xlabel = 'Iterations'
-nlp2.plot_errors(title,xlabel,ylabel)
+    ## -----------------------------
+    ## Second perceptron, shuffled training data, only 1 iteration
+    ## -----------------------------
+    print("------------------------")
+    print("nlp1 - Perceptron 1, non-shuffled training data, only 1 iteration")
+    nlp1 = Nlp()
+    # nlp.debug = True
+    do_data_processing(nlp1, folder_name)
+    # 1 repetition without shuffling the training data
+    shuffle_data = True
+    nlp1.calculate_weights_bag_of_words(shuffle_data)
 
-print("------------------------")
-print("Evaluate data")
-nlp2.evaluate_test_data()
-nlp2.print_evaluation()
+    print("Plot Learning Curve")
+    title = "Accuracy Per Document"
+    ylabel = 'Accuracy'
+    xlabel = 'Documents'
+    nlp1.plot_errors(title, xlabel, ylabel)
 
-print("------------------------")
-print("Perceptron 3")
-nlp3 = Nlp()
-nlp3.debug = True
+    print("Evaluate data")
+    nlp1.evaluate_test_data()
+    # nlp1.print_evaluation()
+    print("------------------------")
 
-nlp3.process_training_data('review_polarity/txt_sentoken/pos/', positive_label)
-nlp3.process_training_data('review_polarity/txt_sentoken/neg/', negative_label)
 
-nlp3.process_test_data('review_polarity/txt_sentoken/pos/', positive_label)
-nlp3.process_test_data('review_polarity/txt_sentoken/neg/', negative_label)
-# 1 repetition without shuffling the training data
-# nlp2.calculate_weights(1, False)
+    ## -----------------------------
+    ## Third perceptron, shuffled training data, 23 iterations
+    ## -----------------------------
+    print("------------------------")
+    print("nlp2 - Perceptron 2, shuffled training data, 23 iteration")
+    nlp2 = Nlp()
+    # nlp2.debug = True
 
-# n repetitions and shuffling the training data
-# nlp3.calculate_weights(23, True)
+    do_data_processing(nlp2, folder_name)
 
-nlp3.calculate_weights_averaged(18) # accuracy .61
-# nlp2.calculate_weights_averaged(20) # accuracy .59
-print("------------------------")
-print("Plot Learning Curve")
-title = "Accuracy Per Iteration"
-ylabel = 'Accuracy'
-xlabel = 'Iterations'
-nlp3.plot_errors(title,xlabel,ylabel)
+    # n repetitions and shuffling the training data
+    nlp2.calculate_weights(23, True)
 
-print("------------------------")
-print("Evaluate data")
-nlp3.evaluate_test_data()
-nlp3.print_evaluation()
+    print("Plot Learning Curve")
+    title = "Accuracy Per Iteration"
+    ylabel = 'Accuracy'
+    xlabel = 'Iterations'
+    nlp2.plot_errors(title,xlabel,ylabel)
+
+    print("Evaluate data")
+    nlp2.evaluate_test_data()
+    nlp2.print_evaluation()
+    # print_top_weights(nlp2.weights)
+    print("------------------------")
+
+
+    ## -----------------------------
+    ## Fourth Perceptron
+    ## -----------------------------
+    print("------------------------")
+    print("nlp3 - Perceptron 3, shuffled training data, weighted averaged, 18 iteration")
+    nlp3 = Nlp()
+    nlp3.debug = True
+
+    do_data_processing(nlp3, folder_name)
+    nlp3.calculate_weights_averaged(18) # accuracy .61
+
+    print("Plot Learning Curve")
+    title = "Accuracy Per Iteration"
+    ylabel = 'Accuracy'
+    xlabel = 'Iterations'
+    nlp3.plot_errors(title,xlabel,ylabel)
+
+    print("Evaluate data")
+    nlp3.evaluate_test_data()
+    nlp3.print_evaluation()
+    # print_top_weights(nlp3.weights)
+    print("------------------------")
