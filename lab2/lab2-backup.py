@@ -7,9 +7,79 @@ import matplotlib.pyplot as plt
 SENTENCE_START = "<s>"
 SENTENCE_END = "</s>"
 
+# class unigram_nlp:
+#     def __init__(self):
+#         self.training_documents = list(list())
+#         self.corpus_file = "./news-corpus-500k.txt"
+#         self.questions_file = "./questions.txt"
+#         self.unigram_frequencies = dict()
+#         self.corpus_length = 0
+#         self.unique_words = 0
+#         self.sentences = list()
+#
+#     def process_training_data(self):
+#         with open(self.corpus_file) as f:
+#             for line in f:
+#                 separate_words = line.split()
+#                 separate_words.pop()
+#                 separate_words.append(SENTENCE_END)
+#                 separate_words.insert(0, SENTENCE_START)
+#                 for word in separate_words:
+#                     self.unigram_frequencies[word] = self.unigram_frequencies.get(word, 0) + 1
+#                     if word != SENTENCE_START and word != SENTENCE_END:
+#                         self.corpus_length += 1
+#                 self.training_documents.append(separate_words)
+#         # subtract 2 because unigram_frequencies dictionary contains values for SENTENCE_START and SENTENCE_END
+#         self.unique_words = len(self.unigram_frequencies) - 2
+#
+#     def process_sentence(self, sentence):
+#         probability = 1
+#         for word in sentence:
+#             if word != SENTENCE_START and word != SENTENCE_END:
+#                 probability = probability * (self.unigram_frequencies.get(word, 0)/ self.corpus_length)
+#         return probability
+#
+#     def prepare_questions(self):
+#         sentences = list()
+#         with open(self.questions_file) as f:
+#             for line in f:
+#                 separate_words = line.split()
+#                 possible_words = separate_words[-1]
+#                 separate_words = separate_words[:-2]
+#                 possible_words = possible_words.split("/")
+#                 sentences.append((separate_words, possible_words))
+#         self.sentences = sentences
+#         return sentences
+#
+#     def calculate_questions(self):
+#         for sentence, words in self.sentences:
+#             print(sentence, words)
+#             index = sentence.index("____")
+#             # print(index)
+#             sentence[index] = words[0]
+#             using_word0 = self.process_sentence(sentence)
+#             sentence[index] = words[1]
+#             using_word1 = self.process_sentence(sentence)
+#             if using_word0 > using_word1:
+#                 print("correct: ", words[0], ": ", using_word0)
+#                 print("false: ", words[1], ": ", using_word1)
+#             else:
+#                 print("correct: ", words[1], ": ", using_word1)
+#                 print("false: ", words[0], ": ", using_word0)
+#
+#     def test_correct(self):
+#         sum = 0
+#         for word in self.unigram_frequencies:
+#             if word != SENTENCE_START and word != SENTENCE_END:
+#                 sum += self.unigram_frequencies[word]
+#         print(sum / self.corpus_length)
+
+
 class bigram_nlp:
     def __init__(self, bool_unigram, questions_uri, corpus_uri):
         self.training_documents = list(list())
+        # self.corpus_file = "./news-corpus-500k.txt"
+        # self.questions_file = "./questions.txt"
         self.corpus_file = corpus_uri
         self.questions_file = questions_uri
         self.unigram_frequencies = dict()
@@ -20,22 +90,16 @@ class bigram_nlp:
         self.sentences = list()
         self.unigram = bool_unigram
 
-    """
-    Opnes the corpus file and extracts the sentences and counts
-    bigrams and unigrams
-    """
     def process_training_data(self):
         with open(self.corpus_file) as f:
             for line in f:
                 line_without_fullstop = line[:-3].lower()
                 padded_line = SENTENCE_START+" "+line_without_fullstop+" "+SENTENCE_END
                 padded_line = padded_line.lower()
+                # print(padded_line)
                 self.count_unigrams(padded_line)
                 self.count_bigrams(padded_line)
 
-    """
-    
-    """
     def count_unigrams(self, sentence):
         separate_words = sentence.split()
         for word in separate_words:
@@ -45,20 +109,15 @@ class bigram_nlp:
                 self.corpus_length += 1
         self.training_documents.append(separate_words)
 
-    """
-    Counts the occurency of bigrams in the training data
-    """
     def count_bigrams(self, sentence):
         separate_words = self.get_bigram(sentence)
         # print(separate_words)
         for word1, word2 in separate_words:
             self.bigram_frequencies[(word1, word2)] = self.bigram_frequencies.get((word1, word2), 0) + 1
             self.bigram_corpus_length += 1
+
         # self.training_documents.append(separate_words)
 
-    """
-    Splits a sentence into a lsit of bigrams
-    """
     def get_bigram(self, sentence):
         result = []
         arr = sentence.split()
@@ -66,11 +125,6 @@ class bigram_nlp:
             result.append((arr[i], arr[i + 1]))
         return result
 
-    """
-    Gets the sentences from the questions file
-    and removes the candidate words and punctuation
-    from it
-    """
     def prepare_questions(self):
         sentences = list()
         with open(self.questions_file) as f:
@@ -85,11 +139,6 @@ class bigram_nlp:
         self.sentences = sentences
         return sentences
 
-    """
-    Calculates the probabilities of all sentence with the
-    candidate words, it also prints out the value of the 
-    probabilities
-    """
     def calculate_questions(self, smoothing):
         for sentence, words in self.sentences:
             print("Sentence -----------")
@@ -107,10 +156,6 @@ class bigram_nlp:
                 print("Predicted: ", words[1], ": ", using_word1)
                 print("Left over: ", words[0], ": ", using_word0)
 
-    """
-    Thsi is the function that actually handles calculating
-    the probability of sentences
-    """
     def process_sentence(self, sentence, smoothing):
         probability = 1
         if self.unigram:
@@ -136,10 +181,6 @@ class bigram_nlp:
                 c += 1
             return probability
 
-    """
-    THis function checks that the total frequencies is the same
-    as the corpus length for bigrams and unigrams
-    """
     def test_correct(self):
         sum = 0
         for word in self.unigram_frequencies:
@@ -152,7 +193,6 @@ class bigram_nlp:
             if word != SENTENCE_START and word != SENTENCE_END:
                 sum += self.bigram_frequencies[word]
         print("Bigram Corpus Length Ratio: ",sum / self.bigram_corpus_length)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')

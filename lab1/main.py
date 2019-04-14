@@ -51,6 +51,7 @@ class Nlp:
         for file in os.listdir(path_to_files)[800:]:
             with open(path_to_files + file, 'r') as f:
                 counted_words = re.sub("[^\w']", " ", f.read()).split()
+                counted_words = re.sub("[^\w']", " ", f.read()).split()
                 dictionary = Counter(counted_words)
                 test_data = (dictionary, label)
                 self.test_documents.append(test_data)
